@@ -4,7 +4,12 @@
 apps/uploads/
 apps/ndvi/
 apps/uploads
-apps/uploads/*
+apps/uploads/*.PNG
+apps/uploads/*.pngn
+apps/uploads/*.jpeg
+apps/uploads/*.JPG
+apps/uploads/*.tiff
+apps/uploads/*.TIFF
 *.PNG
 *.png
 *.jpeg
