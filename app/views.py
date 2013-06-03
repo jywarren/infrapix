@@ -31,6 +31,10 @@ from PIL import Image
 
 import flask_sijax
 
+
+### in order to handle odd filenames
+# see online material here: http://flask.pocoo.org/snippets/5/
+
 #UPLOAD_FOLDER = '/home/asine/infrapix.pvos.org/app/uploads'
 #NDVI_FOLDER = '/home/asine/infrapix.pvos.org/app/ndvi'
 
@@ -41,55 +45,11 @@ NDVI_FOLDER = os.path.join(app.root_path, 'ndvi')
 #UPLOAD_FOLDER = '/home/asine/infrapix.pvos.org/public/uploads'
 #NDVI_FOLDER = '/home/asine/infrapix.pvos.org/public/ndvi'
 
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif','PNG','JPEG'])
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['NDVI_FOLDER'] = NDVI_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-
-
-# sijax stuff
-path = os.path.join(app.root_path, 'static/js/sijax/')
-app.config['SIJAX_STATIC_PATH']= path
-app.config['SIJAX_JSON_URI']='/static/js/sijax/json2.js'
-flask_sijax.Sijax(app)
-
-
-#@app.route('/')
-#@app.route('/index')
-#def index():
-#    return "Hello, World!"
-
-# Regular flask view function - Sijax is unavailable here
-@app.route("/sijaxTest")
-def hello():
-    return "Hello World!<br /><a href='/sijax'>Go to Sijax test</a>"
-
-# Sijax enabled function - notice the `@Sijax.route` decorator
-# used instead of `@app.route` (above).
-@flask_sijax.route(app, "/sijax")
-def hello_sijax():
-    # Sijax handler function receiving 2 arguments from the browser
-    # The first argument (obj_response) is passed automatically
-    # by Sijax (much like Python passes `self` to object methods)
-    def hello_handler(obj_response, hello_from, hello_to):
-        obj_response.alert('Hello from %s to %s' % (hello_from, hello_to))
-        obj_response.css('a', 'color', 'green')
-
-    # Another Sijax handler function which receives no arguments
-    def goodbye_handler(obj_response):
-        obj_response.alert('Goodbye, whoever you are.')
-        obj_response.css('a', 'color', 'red')
-
-    if g.sijax.is_sijax_request:
-        # The request looks like a valid Sijax request
-        # Let's register the handlers and tell Sijax to process it
-        g.sijax.register_callback('say_hello', hello_handler)
-        g.sijax.register_callback('say_goodbye', goodbye_handler)
-        return g.sijax.process_request()
-
-    return render_template('hello.html')
-
 
 
 
@@ -156,46 +116,47 @@ def allowed_file(filename):
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
-    if request.method=='POST':
-        file=request.files['file']
-        if file: 
-            filename=file.filename
-            uploadFilePath=os.path.join(app.config['UPLOAD_FOLDER'],filename)
-            file.save(uploadFilePath)
-            ndviFilePath=os.path.join(app.config['UPLOAD_FOLDER'],'ndvi_'+filename)
-            nirFilePath=os.path.join(app.config['UPLOAD_FOLDER'],'nir_'+filename)
-            ndvi(uploadFilePath,ndviFilePath)
-            nir(uploadFilePath,nirFilePath)
-            return redirect(url_for('uploaded_file',filename=filename)) 
-    return '''
-        <!doctype html>
-<head>
-<title>infrapix!</title>
-<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap/css/bootstrap.css') }}" />
-<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/slider.css') }}" />
-</head>
-<body class="container">
+	if request.method=='POST':
+		file=request.files['file']
+		if file and allowed_file(file.filename):
+			filename=secure_filename(file.filename)
+			#filename=slugify(filename)
+			uploadFilePath=os.path.join(app.config['UPLOAD_FOLDER'],filename)
+			file.save(uploadFilePath)
+			ndviFilePath=os.path.join(app.config['UPLOAD_FOLDER'],'ndvi_'+filename)
+			nirFilePath=os.path.join(app.config['UPLOAD_FOLDER'],'nir_'+filename)
+			ndvi(uploadFilePath,ndviFilePath)
+			nir(uploadFilePath,nirFilePath)
+			return redirect(url_for('uploaded_file',filename=filename)) 
+	return '''
+		<!doctype html>
+	<head>
+	<title>infrapix!</title>
+	<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap/css/bootstrap.css') }}" />
+	<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/slider.css') }}" />
+	</head>
+	<body class="container">
 
 
-        <img src="http://i.publiclab.org/system/images/photos/000/000/264/medium/main-image-med.jpg"><br>
-        <title>Infragram Online!</title>
-<br>
-Welcome to Public Lab's online service for generating NDVI from near-infrared pictures!</br><br>
+		<img src="http://i.publiclab.org/system/images/photos/000/000/264/medium/main-image-med.jpg"><br>
+		<title>Infragram Online!</title>
+	<br>
+	Welcome to Public Lab's online service for generating NDVI from near-infrared pictures!</br><br>
 
-<div class="well">
-        <h2>Upload a new file</h2>
+	<div class="well">
+		<h2>Upload a new file</h2>
 
-To upload a file for processing, please click on the "Choose File" button below.  After you've selected a file, click "Upload".
+	To upload a file for processing, please click on the "Choose File" button below.  After you've selected a file, click "Upload".
 
-        <form action="" method=post enctype=multipart/form-data>
-          <p><input type=file name=file>
-                 <input type=submit value=Upload>
-        </form>
-</div>
-</body>
-</html>
+		<form action="" method=post enctype=multipart/form-data>
+		  <p><input type=file name=file>
+		         <input type=submit value=Upload>
+		</form>
+	</div>
+	</body>
+	</html>
 
-        '''
+		'''
 
 @app.route('/uploads/<filename>')
 def send_file(filename):
@@ -206,110 +167,8 @@ def send_file(filename):
 def uploaded_file(filename):
     uploadFilePath=os.path.join(app.config['UPLOAD_FOLDER'],filename)
     ndviFilePath=os.path.join(app.config['NDVI_FOLDER'],filename)  
-    return render_template('sliders.html',filename='/uploads/'+filename, ndviFilename='/uploads/'+'ndvi_'+filename, nirFilename='/uploads/'+'nir_'+filename)
+    return render_template('vanilla.html',filename='/uploads/'+filename, ndviFilename='/uploads/'+'ndvi_'+filename, nirFilename='/uploads/'+'nir_'+filename)
 
 
 
-
-###### sijax uploader ######
-
-class SijaxHandler(object):
-    """A container class for all Sijax handlers.
-
-    Grouping all Sijax handler functions in a class
-    (or a Python module) allows them all to be registered with
-    a single line of code.
-    """
-
-    @staticmethod
-    def _dump_data(obj_response, files, form_values, container_id):
-        def dump_files():
-            if 'file' not in files:
-                return 'Bad upload'
-
-            file_data = files['file']
-            file_name = file_data.filename
-            if file_name is None:
-                return 'Nothing uploaded'
-
-            file_type = file_data.content_type
-            file_size = len(file_data.read())
-            return 'Uploaded file %s (%s) - %sB' % (file_name, file_type, file_size)
-
-        html = """Form values: %s<hr />Files: %s"""
-        html = html % (str(form_values), dump_files())
-
-        obj_response.html('#%s' % container_id, html)
-
-    @staticmethod
-    def form_one_handler(obj_response, files, form_values):
-        SijaxHandler._dump_data(obj_response, files, form_values, 'formOneResponse')
-
-    @staticmethod
-    def form_two_handler(obj_response, files, form_values):
-        SijaxHandler._dump_data(obj_response, files, form_values, 'formTwoResponse')
-
-        obj_response.reset_form()
-        obj_response.html_append('#formTwoResponse', '<br />Form elements were reset!<br />Doing some more work (2 seconds)..')
-
-        # Send the data to the browser now
-        yield obj_response
-
-        from time import sleep
-        sleep(2)
-
-        obj_response.html_append('#formTwoResponse', '<br />Finished!')
-
-
-@flask_sijax.route(app, "/sijaxUploadTest")
-def index():
-    # Notice how we're doing callback registration on each request,
-    # instead of only when needed (when the request is a Sijax request).
-    # This is because `register_upload_callback` returns some javascript
-    # that prepares the form on the page.
-    form_init_js = ''
-    form_init_js += g.sijax.register_upload_callback('formOne', SijaxHandler.form_one_handler)
-    form_init_js += g.sijax.register_upload_callback('formTwo', SijaxHandler.form_two_handler)
-
-    if g.sijax.is_sijax_request:
-        # The request looks like a valid Sijax request
-        # The handlers are already registered above.. we can process the request
-        return g.sijax.process_request()
-
-    return render_template('upload.html', form_init_js=form_init_js)
-
-############# sijax comet test ################
-
-def comet_do_work_handler(obj_response, sleep_time):
-    import time
-
-    for i in range(6):
-        width = '%spx' % (i * 80)
-        obj_response.css('#progress', 'width', width)
-        obj_response.html('#progress', width)
-
-        # Yielding tells Sijax to flush the data to the browser.
-        # This only works for Streaming functions (Comet or Upload)
-        # and would not work for normal Sijax functions
-        yield obj_response
-
-        if i != 5:
-            time.sleep(sleep_time)
-
-
-@flask_sijax.route(app, "/sijaxCometTest")
-def index():
-    if g.sijax.is_sijax_request:
-        # The request looks like a valid Sijax request
-        # Let's register the handlers and tell Sijax to process it
-        g.sijax.register_comet_callback('do_work', comet_do_work_handler)
-        return g.sijax.process_request()
-
-    return render_template('comet.html')
-
-##### testing out twitter bootstrap
-
-@app.route("/slidertest")
-def index():
-    return render_template('sliders.html')
 
