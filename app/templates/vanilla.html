@@ -136,7 +136,7 @@
   </head>
   <body class="container">
 <div class="page-header">
-<p><strong>infragram:</strong> a near-infrared imaging platform built by the <a href="http://publiclab.org">Public Lab</a> community.</p>
+  <p><strong>Infragram:</strong> a near-infrared imaging platform built by the <a href="http://publiclab.org">Public Lab</a> community. <a href="https://github.com/Pioneer-Valley-Open-Science/infrapix">View on Github</a></p>
 </div>
 
 {% if filename %}
@@ -146,9 +146,21 @@
               <div class="span4"><center><h3>NIR</center></h3></div>
             </div>
             <div class="row show-grid">
-              <div class="span4"><img src="{{filename}}"></div>
-              <div class="span4"><img src="{{ndviFilename}}"></div>
-              <div class="span4"><img src="{{nirFilename}}"></div>
+              <div class="span4">
+                <a href="{{filename}}">
+                  <img src="{{filename}}">
+                </a>
+              </div>
+              <div class="span4">
+                <a href="{{ndviFilename}}">
+                  <img src="{{ndviFilename}}">
+                </a>
+              </div>
+              <div class="span4">
+                <a href="{{nirFilename}}">
+                  <img src="{{nirFilename}}">
+                </a>
+              </div>
             </div>
 <br>
 

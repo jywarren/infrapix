@@ -11,13 +11,19 @@
 <body>
 {% if filename %}
 <h2>Original:<h2>
-<img width=400 src="{{filename}}">
+<a href="{{filename}}">
+  <img width=400 src="{{filename}}">
+</a>
 <br>
 <h2>NDVI:</h2>
-<img width=500 src="{{ndviFilename}}">
+<a href="{{ndviFilename}}">
+  <img width=500 src="{{ndviFilename}}">
+</a>
 <br>
 <h3>NIR:</h2>
-<img width=500 src="{{nirFilename}}">
+<a href="{{nirFilename}}">
+  <img width=500 src="{{nirFilename}}">
+</a>
 {% else %}
   <h1>no image for whatever reason</h1>
 {% endif %}
