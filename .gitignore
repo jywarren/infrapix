@@ -16,3 +16,5 @@ apps/uploads/*.TIFF
 *.JPG
 *.tiff
 *.TIFF
+*.mp4
+*.jpg
